@@ -8,17 +8,17 @@ using Bulky.DataAccess.Repository.IRepository;
 using BulkyWeb.DataAcess.Data;
 using Microsoft.EntityFrameworkCore;
 
-namespace Bulky.DataAccess.Repository.IRepository
+namespace Bulky.DataAccess.Repository
 {
     public class Repository<T> : IRepository<T> where T : class
-    {   
+    {
         private readonly ApplicationDbContext _db;
         internal DbSet<T> dbSet;
 
         public Repository(ApplicationDbContext db)
         {
             _db = db;
-            this.dbSet = _db.Set<T>();
+            dbSet = _db.Set<T>();
             _db.Products.Include(u => u.Category).Include(u => u.CategoryId);
         }
         public void Add(T entity)
@@ -26,10 +26,20 @@ namespace Bulky.DataAccess.Repository.IRepository
             dbSet.Add(entity);
         }
 
-        public T Get(Expression<Func<T, bool>> filter, string? includeProperties = null)
+        public T Get(Expression<Func<T, bool>> filter, string? includeProperties = null, bool tracked = false)
         {
-            IQueryable<T> query = dbSet;
-            query.Where(filter);
+            IQueryable<T> query;
+            if (tracked)
+            {
+                query = dbSet;
+
+            }
+            else
+            {
+                query = dbSet.AsNoTracking();
+            }
+
+            query = query.Where(filter);
             if (!string.IsNullOrEmpty(includeProperties))
             {
                 foreach (var includeProp in includeProperties
@@ -38,7 +48,7 @@ namespace Bulky.DataAccess.Repository.IRepository
                     query = query.Include(includeProp);
                 }
             }
-            return query.FirstOrDefault(filter);
+            return query.FirstOrDefault();
         }
 
         public IEnumerable<T> GetAll(string? includeProperties = null)
@@ -47,8 +57,8 @@ namespace Bulky.DataAccess.Repository.IRepository
             if (!string.IsNullOrEmpty(includeProperties))
             {
                 foreach (var includeProp in includeProperties
-                    .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries)) 
-                { 
+                    .Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+                {
                     query = query.Include(includeProp);
                 }
             }
@@ -62,7 +72,7 @@ namespace Bulky.DataAccess.Repository.IRepository
 
         public void RemoveRange(IEnumerable<T> entity)
         {
-           dbSet.RemoveRange(entity);
+            dbSet.RemoveRange(entity);
         }
     }
 }
