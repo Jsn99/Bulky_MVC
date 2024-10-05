@@ -19,9 +19,9 @@ namespace Bulky.DataAccess.Repository
             _db = db;
         }
 
-        public void Update(Category obj)
+        public void Update(OrderDetail obj)
         {
-            _db.Categories.Update(obj);
+            _db.OrderDetails.Update(obj);
         }
     }
 
